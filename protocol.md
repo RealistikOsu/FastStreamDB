@@ -5,6 +5,7 @@ For the purposes of efficiency, FastStreamDB uses a simple, primitive binary pro
 
 ## Packet IDs
 | Packet Name | Packet ID | Description | Has Payload |
+| ----------- | --------- | ----------- | ----------- |
 | `CLIENT_PING` | 0 | Prompts the server to respond with a `SERVER_PONG` packet. Used for health checking. | ❌ |
 | `CLIENT_CREATE_NEW_STREAM` | 1 | Creates a new stream with a given Stream ID. Does nothing if it already exists. | ✅ |
 | `CLIENT_DELETE_STREAM` | 2 | Deletes a stream with a given ID. Does nothing if it doesn't exist. | ✅ |
