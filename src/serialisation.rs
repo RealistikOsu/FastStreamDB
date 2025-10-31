@@ -1,3 +1,5 @@
+pub type Bytes = Vec<u8>;
+
 const PACKET_ID_CLIENT_PING: u32 = 0;
 const PACKET_ID_CLIENT_CREATE_NEW_STREAM: u32 = 1;
 const PACKET_ID_CLIENT_DELETE_STREAM: u32 = 2;
@@ -22,17 +24,17 @@ pub enum Packet {
     },
     ClientEnqueueSingle {
         stream_id: u32,
-        enqueue_data: Vec<u8>,
+        enqueue_data: Bytes,
     },
     ClientEnqueueMultiple {
-        enqueue_data: Vec<u8>,
+        enqueue_data: Bytes,
         filter_stream_ids: Vec<u32>,
     },
     ClientEnqueueAll {
-        enqueue_data: Vec<u8>,
+        enqueue_data: Bytes,
     },
     ClientEnqueueAllExcept {
-        enqueue_data: Vec<u8>,
+        enqueue_data: Bytes,
         filter_stream_ids: Vec<u32>,
     },
     ClientRequestStreamContents {
@@ -46,7 +48,7 @@ pub enum Packet {
     },
     ServerPong,
     ServerStreamContents {
-        buffer_data: Vec<u8>,
+        buffer_data: Bytes,
     },
     ServerStreamState {
         stream_id: u32,
@@ -77,13 +79,13 @@ impl Packet {
 }
 
 // Writer helper functions
-fn write_stream_into_buffer(buffer: &mut Vec<u8>, stream: &Vec<u8>) {
+fn write_stream_into_buffer(buffer: &mut Bytes, stream: &Bytes) {
     let stream_size = stream.len() as u32;
     buffer.extend_from_slice(&stream_size.to_le_bytes());
     buffer.extend_from_slice(stream);
 }
 
-fn write_filter_list_into_buffer(buffer: &mut Vec<u8>, filter_list: &Vec<u32>) {
+fn write_filter_list_into_buffer(buffer: &mut Bytes, filter_list: &Vec<u32>) {
     let filter_list_size = filter_list.len() as u32;
     buffer.extend_from_slice(&filter_list_size.to_le_bytes());
 
@@ -92,13 +94,13 @@ fn write_filter_list_into_buffer(buffer: &mut Vec<u8>, filter_list: &Vec<u32>) {
     }
 }
 
-fn write_boolean_into_buffer(buffer: &mut Vec<u8>, value: bool) {
+fn write_boolean_into_buffer(buffer: &mut Bytes, value: bool) {
     // Write boolean as u32 (1 byte value + 3 padding bytes)
     let value = if value { 1u32 } else { 0u32 };
     buffer.extend_from_slice(&value.to_le_bytes());
 }
 
-fn write_packet_into_buffer(buffer: &mut Vec<u8>, packet: &Packet) {
+fn write_packet_into_buffer(buffer: &mut Bytes, packet: &Packet) {
     buffer.extend_from_slice(&packet.packet_id().to_le_bytes());
 
     match packet {
@@ -164,7 +166,7 @@ struct ReadResult<T> {
     new_offset: usize,
 }
 
-fn read_boolean_from_buffer(buffer: &Vec<u8>, offset: usize) -> ReadResult<bool> {
+fn read_boolean_from_buffer(buffer: &Bytes, offset: usize) -> ReadResult<bool> {
     let value = buffer[offset] > 0;
     let new_offset = offset + 4;
 
@@ -172,10 +174,7 @@ fn read_boolean_from_buffer(buffer: &Vec<u8>, offset: usize) -> ReadResult<bool>
 }
 
 // Not sure how I feel about the results, this whole think kinda relies on trust.
-fn read_stream_from_buffer(
-    buffer: &Vec<u8>,
-    mut offset: usize,
-) -> anyhow::Result<ReadResult<Vec<u8>>> {
+fn read_stream_from_buffer(buffer: &Bytes, mut offset: usize) -> anyhow::Result<ReadResult<Bytes>> {
     let stream_size = u32::from_le_bytes(buffer[offset..offset + 4].try_into()?);
     offset += 4;
 
@@ -191,7 +190,7 @@ fn read_stream_from_buffer(
 }
 
 fn read_filter_list_from_buffer(
-    buffer: &Vec<u8>,
+    buffer: &Bytes,
     mut offset: usize,
 ) -> anyhow::Result<ReadResult<Vec<u32>>> {
     let filter_list_size = u32::from_le_bytes(buffer[offset..offset + 4].try_into()?);
@@ -212,7 +211,7 @@ fn read_filter_list_from_buffer(
 }
 
 fn read_packet_from_buffer(
-    buffer: &Vec<u8>,
+    buffer: &Bytes,
     mut offset: usize,
 ) -> anyhow::Result<ReadResult<Packet>> {
     let packet_id = u32::from_le_bytes(buffer[offset..offset + 4].try_into()?);

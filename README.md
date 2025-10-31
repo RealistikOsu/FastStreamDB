@@ -1,6 +1,9 @@
 # FastStreamDB
 A Bancho packet stream database built with performance in mind.
 
+- High performance Rust
+- Single-threaded (avoiding the complexities of synchronisation).
+
 ## Rationale
 The main difficulty with scaling a Bancho horizontally are the packets streams. There exists no specialised solution for this (to my knowledge), and others come with much overhead.
 The objective of FastStreamDB is to facilitate this niche by providing a database optimised specifically for those operations and their frequencies.
