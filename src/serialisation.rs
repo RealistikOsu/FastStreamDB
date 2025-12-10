@@ -100,7 +100,7 @@ fn write_boolean_into_buffer(buffer: &mut Bytes, value: bool) {
     buffer.extend_from_slice(&value.to_le_bytes());
 }
 
-fn write_packet_into_buffer(buffer: &mut Bytes, packet: &Packet) {
+pub fn write_packet_into_buffer(buffer: &mut Bytes, packet: &Packet) {
     buffer.extend_from_slice(&packet.packet_id().to_le_bytes());
 
     match packet {
@@ -161,9 +161,9 @@ fn write_packet_into_buffer(buffer: &mut Bytes, packet: &Packet) {
 }
 
 // Reader helper functions
-struct ReadResult<T> {
-    value: T,
-    new_offset: usize,
+pub struct ReadResult<T> {
+    pub value: T,
+    pub new_offset: usize,
 }
 
 fn read_boolean_from_buffer(buffer: &Bytes, offset: usize) -> ReadResult<bool> {
@@ -210,7 +210,7 @@ fn read_filter_list_from_buffer(
     })
 }
 
-fn read_packet_from_buffer(
+pub fn read_packet_from_buffer(
     buffer: &Bytes,
     mut offset: usize,
 ) -> anyhow::Result<ReadResult<Packet>> {
@@ -341,4 +341,62 @@ fn read_packet_from_buffer(
         }
         _ => Err(anyhow::anyhow!("Invalid packet ID: {}", packet_id)),
     }
+}
+
+pub fn serialize_packets(packets: &[Packet]) -> Bytes {
+    let mut buffer = Bytes::new();
+    for packet in packets {
+        write_packet_into_buffer(&mut buffer, packet);
+    }
+    buffer
+}
+
+pub fn deserialize_packets(buffer: &Bytes) -> anyhow::Result<Vec<Packet>> {
+    let mut packets = Vec::new();
+    let mut offset = 0;
+
+    while offset < buffer.len() {
+        // Check if we have at least 4 bytes for packet_id
+        if buffer.len() - offset < 4 {
+            break; // Not enough data for packet_id
+        }
+
+        match read_packet_from_buffer(buffer, offset) {
+            Ok(result) => {
+                packets.push(result.value);
+                offset = result.new_offset;
+            }
+            Err(_) => {
+                // Partial packet, stop parsing
+                break;
+            }
+        }
+    }
+
+    Ok(packets)
+}
+
+pub fn deserialize_packets_with_offset(buffer: &Bytes) -> anyhow::Result<(Vec<Packet>, usize)> {
+    let mut packets = Vec::new();
+    let mut offset = 0;
+
+    while offset < buffer.len() {
+        // Check if we have at least 4 bytes for packet_id
+        if buffer.len() - offset < 4 {
+            break; // Not enough data for packet_id
+        }
+
+        match read_packet_from_buffer(buffer, offset) {
+            Ok(result) => {
+                packets.push(result.value);
+                offset = result.new_offset;
+            }
+            Err(_) => {
+                // Partial packet, stop parsing
+                break;
+            }
+        }
+    }
+
+    Ok((packets, offset))
 }

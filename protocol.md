@@ -2,6 +2,7 @@
 
 For the purposes of efficiency, FastStreamDB uses a simple, primitive binary protocol where bytes are laid out according to a fixed schema.
 - All bytes are in little endian byte order.
+- Packets are sent in sequential streams, with mutliple packets being able to be sent in a single request.
 
 ## Packet IDs
 | Packet Name | Packet ID | Description | Has Payload |

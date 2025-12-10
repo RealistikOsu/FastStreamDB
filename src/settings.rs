@@ -32,11 +32,24 @@ pub struct Settings {
 
 impl Settings {
     pub fn from_env() -> anyhow::Result<Self> {
-        let key_expiry = Duration::from_secs(env::var("FSDB_KEY_EXPIRY")?.parse::<u64>()?);
-        let connection_mode = ConnectionMode::from_str(&env::var("FSDB_CONNECTION_MODE")?)?;
-        let unix_sock_path = env::var("FSDB_UNIX_SOCK_PATH")?;
-        let tcp_port = env::var("FSDB_TCP_PORT")?.parse::<u16>()?;
-        let tcp_host = IpAddr::from_str(&env::var("FSDB_TCP_HOST")?)?;
+        let key_expiry = env::var("FSDB_KEY_EXPIRY")
+            .map(|v| v.parse::<u64>().map(Duration::from_secs))
+            .unwrap_or(Ok(Duration::from_secs(150)))?;
+
+        let connection_mode = env::var("FSDB_CONNECTION_MODE")
+            .map(|v| ConnectionMode::from_str(&v))
+            .unwrap_or(Ok(ConnectionMode::UnixSocket))?;
+
+        let unix_sock_path =
+            env::var("FSDB_UNIX_SOCK_PATH").unwrap_or_else(|_| "/tmp/fsdb.sock".to_string());
+
+        let tcp_port = env::var("FSDB_TCP_PORT")
+            .map(|v| v.parse::<u16>())
+            .unwrap_or(Ok(1273))?;
+
+        let tcp_host = env::var("FSDB_TCP_HOST")
+            .map(|v| IpAddr::from_str(&v))
+            .unwrap_or(Ok(IpAddr::from_str("127.0.0.1").unwrap()))?;
 
         Ok(Self {
             key_expiry,
