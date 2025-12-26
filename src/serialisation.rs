@@ -343,7 +343,7 @@ pub fn read_packet_from_buffer(
     }
 }
 
-pub fn serialize_packets(packets: &[Packet]) -> Bytes {
+pub fn serialise_packets(packets: &[Packet]) -> Bytes {
     let mut buffer = Bytes::new();
     for packet in packets {
         write_packet_into_buffer(&mut buffer, packet);
@@ -351,7 +351,7 @@ pub fn serialize_packets(packets: &[Packet]) -> Bytes {
     buffer
 }
 
-pub fn deserialize_packets(buffer: &Bytes) -> anyhow::Result<Vec<Packet>> {
+pub fn deserialise_packets(buffer: &Bytes) -> anyhow::Result<Vec<Packet>> {
     let mut packets = Vec::new();
     let mut offset = 0;
 
@@ -376,7 +376,7 @@ pub fn deserialize_packets(buffer: &Bytes) -> anyhow::Result<Vec<Packet>> {
     Ok(packets)
 }
 
-pub fn deserialize_packets_with_offset(buffer: &Bytes) -> anyhow::Result<(Vec<Packet>, usize)> {
+pub fn deserialise_packets_with_offset(buffer: &Bytes) -> anyhow::Result<(Vec<Packet>, usize)> {
     let mut packets = Vec::new();
     let mut offset = 0;
 
